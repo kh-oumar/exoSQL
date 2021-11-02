@@ -1,0 +1,2 @@
+# exoSQL
+Exercice MySQL 
