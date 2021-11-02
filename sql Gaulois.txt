@@ -1,0 +1,130 @@
+1 : 
+SELECT nom_lieu
+FROM lieu
+WHERE nom_lieu LIKE "%um"
+
+2: 
+SELECT nom_lieu, COUNT(l.id_lieu) AS nbGaulois
+FROM personnage p
+INNER JOIN lieu l ON p.id_lieu = l.id_lieu
+GROUP BY l.id_lieu
+ORDER BY nbGaulois DESC 
+
+3: 
+SELECT nom_personnage, nom_specialite, adresse_personnage, nom_lieu
+FROM personnage p
+INNER JOIN lieu l ON p.id_lieu = l.id_lieu
+INNER JOIN specialite s ON p.id_specialite = s.id_specialite
+ORDER BY nom_lieu, nom_personnage
+
+4:
+SELECT nom_specialite, COUNT(s.id_specialite) AS nbGaulois
+FROM personnage p
+INNER JOIN specialite s ON p.id_specialite = s.id_specialite
+GROUP BY s.id_specialite
+ORDER BY nbGaulois DESC 
+
+5:
+SELECT nom_bataille, DATE_FORMAT(date_bataille, "%d / %m / -%y") AS date, nom_lieu
+FROM bataille b
+INNER JOIN lieu l ON b.id_lieu = l.id_lieu
+ORDER BY YEAR(date_bataille), MONTH(date_bataille) DESC
+
+6:
+SELECT nom_potion, SUM(qte*cout_ingredient) AS cout
+FROM composer c
+INNER JOIN ingredient i ON c.id_ingredient = i.id_ingredient
+INNER JOIN potion p ON c.id_potion= p.id_potion
+GROUP BY nom_potion
+ORDER BY cout DESC 
+
+7:
+SELECT nom_ingredient, (qte*cout_ingredient) AS cout,qte
+FROM composer c
+INNER JOIN ingredient i ON c.id_ingredient = i.id_ingredient
+INNER JOIN potion p ON c.id_potion= p.id_potion
+WHERE LOWER(nom_potion) ="santé"
+
+8:
+SELECT p.nom_personnage, SUM(qte) AS maxi ,nom_bataille
+FROM prendre_casque pc
+INNER JOIN personnage p ON pc.id_personnage = p.id_personnage
+INNER JOIN bataille b ON pc.id_bataille = b.id_bataille
+WHERE b.nom_bataille = "Raid gaulois sur Petibonum"
+GROUP BY p.id_personnage  
+HAVING maxi >= ALL(
+             	SELECT SUM(qte) AS quantite
+					FROM prendre_casque pc
+					INNER JOIN personnage p ON pc.id_personnage = p.id_personnage
+					INNER JOIN bataille b ON pc.id_bataille = b.id_bataille
+					WHERE b.nom_bataille = "Raid gaulois sur Petibonum"
+					GROUP BY p.id_personnage 
+            )
+
+9:
+SELECT nom_personnage, dose_boire
+FROM boire b
+INNER JOIN personnage p ON b.id_personnage= p.id_personnage
+ORDER BY dose_boire DESC 
+
+10:
+SELECT b.nom_bataille,SUM(qte) AS maxi
+FROM prendre_casque pc
+INNER JOIN bataille b ON pc.id_bataille= b.id_bataille
+GROUP BY b.id_bataille	
+HAVING maxi >= ALL ( SELECT SUM(qte) AS quantite
+		FROM prendre_casque pc
+		INNER JOIN bataille b ON pc.id_bataille = b.id_bataille
+		GROUP BY b.id_bataille )
+
+11:
+SELECT tc.nom_type_casque, COUNT(tc.id_type_casque) AS nbCasque,SUM(cout_casque) as PRIX
+FROM casque c
+INNER JOIN type_casque tc ON c.id_type_casque = tc.id_type_casque
+GROUP BY tc.nom_type_casque
+ORDER BY nbCasque DESC 
+
+12:
+SELECT p.nom_potion
+FROM composer c
+INNER JOIN ingredient i ON c.id_ingredient = i.id_ingredient
+INNER JOIN potion p ON c.id_potion= p.id_potion
+WHERE LOWER(nom_ingredient) ="poisson frais"
+
+13:
+SELECT nom_lieu,COUNT(p.nom_personnage) AS nbHab
+FROM personnage p
+INNER JOIN lieu l ON p.id_lieu = l.id_lieu
+WHERE lOWER(nom_lieu) != "village gaulois"
+GROUP BY nom_lieu
+HAVING nbHab>= ALL(SELECT COUNT(p.nom_personnage) AS nbHab
+FROM personnage p
+INNER JOIN lieu l ON p.id_lieu = l.id_lieu
+WHERE lOWER(nom_lieu) != "village gaulois"
+GROUP BY nom_lieu
+) 
+
+14:
+SELECT nom_personnage
+FROM personnage p
+WHERE NOT EXISTS( 
+SELECT *
+FROM boire b
+WHERE b.id_personnage= p.id_personnage) 
+
+15:
+SELECT nom_personnage
+FROM personnage p
+WHERE NOT EXISTS( 
+SELECT *
+FROM autoriser_boire b
+INNER JOIN potion p ON b.id_potion = p.id_potion
+WHERE b.id_personnage= p.id_personnage AND nom_potion="magique") 
+
+
+
+
+
+
+
+
