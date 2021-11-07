@@ -1,7 +1,9 @@
+Partie 1 : 
+
 1 : 
 SELECT nom_lieu
 FROM lieu
-WHERE nom_lieu LIKE "%um"
+WHERE LOWER(nom_lieu) LIKE "%um"
 
 2: 
 SELECT nom_lieu, COUNT(l.id_lieu) AS nbGaulois
@@ -35,18 +37,19 @@ SELECT nom_potion, SUM(qte*cout_ingredient) AS cout
 FROM composer c
 INNER JOIN ingredient i ON c.id_ingredient = i.id_ingredient
 INNER JOIN potion p ON c.id_potion= p.id_potion
-GROUP BY nom_potion
+GROUP BY p.id_potion
 ORDER BY cout DESC 
 
 7:
-SELECT nom_ingredient, (qte*cout_ingredient) AS cout,qte
+SELECT nom_ingredient, cout_ingredient,qte
 FROM composer c
 INNER JOIN ingredient i ON c.id_ingredient = i.id_ingredient
 INNER JOIN potion p ON c.id_potion= p.id_potion
 WHERE LOWER(nom_potion) ="santé"
 
+
 8:
-SELECT p.nom_personnage, SUM(qte) AS maxi ,nom_bataille
+SELECT  
 FROM prendre_casque pc
 INNER JOIN personnage p ON pc.id_personnage = p.id_personnage
 INNER JOIN bataille b ON pc.id_bataille = b.id_bataille
@@ -54,18 +57,20 @@ WHERE b.nom_bataille = "Raid gaulois sur Petibonum"
 GROUP BY p.id_personnage  
 HAVING maxi >= ALL(
              	SELECT SUM(qte) AS quantite
-					FROM prendre_casque pc
-					INNER JOIN personnage p ON pc.id_personnage = p.id_personnage
-					INNER JOIN bataille b ON pc.id_bataille = b.id_bataille
-					WHERE b.nom_bataille = "Raid gaulois sur Petibonum"
-					GROUP BY p.id_personnage 
+		FROM prendre_casque pc
+		INNER JOIN personnage p ON pc.id_personnage = p.id_personnage
+		INNER JOIN bataille b ON pc.id_bataille = b.id_bataille
+		WHERE b.nom_bataille = "Raid gaulois sur Petibonum"
+		GROUP BY p.id_personnage 
             )
 
 9:
-SELECT nom_personnage, dose_boire
+SELECT nom_personnage,nom_potion,SUM(dose_boire) AS bu
 FROM boire b
 INNER JOIN personnage p ON b.id_personnage= p.id_personnage
-ORDER BY dose_boire DESC 
+INNER JOIN potion po ON b.id_potion= po.id_potion
+GROUP BY p.id_personnage, po.id_potion
+ORDER BY nom_personnage,bu DESC 
 
 10:
 SELECT b.nom_bataille,SUM(qte) AS maxi
@@ -110,21 +115,68 @@ FROM personnage p
 WHERE NOT EXISTS( 
 SELECT *
 FROM boire b
-WHERE b.id_personnage= p.id_personnage) 
+WHERE b.id_personnage=p.id_personnage)    
+
+Alternative
+
+SELECT nom_personnage
+FROM personnage p
+WHERE p.id_personnage NOT IN (
+SELECT b.id_personnage
+FROM boire b)
+
+Alternative
+
+SELECT nom_personnage
+FROM personnage p
+LEFT JOIN boire b ON b.id_personnage=p.id_personnage
+WHERE b.id_personnage IS NULL 
 
 15:
+SELECT nom_personnage
+FROM personnage p
+WHERE p.id_personnage NOT IN (
+SELECT b.id_personnage
+FROM autoriser_boire b
+INNER JOIN potion po ON b.id_potion = po.id_potion
+WHERE LOWER(nom_potion)="magique")
+
+
 SELECT nom_personnage
 FROM personnage p
 WHERE NOT EXISTS( 
 SELECT *
 FROM autoriser_boire b
 INNER JOIN potion p ON b.id_potion = p.id_potion
-WHERE b.id_personnage= p.id_personnage AND nom_potion="magique") 
+WHERE b.id_personnage= p.id_personnage AND LOWER(nom_potion)="magique") 
 
 
+Partie 2 : 
 
+A :
+INSERT INTO personnage(nom_personnage,adresse_personnage,id_specialite,id_lieu,image_personnage)
+VALUES ('Champdeblix',"Ferme Hantassion",(SELECT id_specialite FROM specialite WHERE LOWER(nom_specialite) ='agriculteur'),(SELECT id_lieu FROM lieu WHERE LOWER(nom_lieu) ='rotomagus'),'indisponible.jpg')
 
+B:
+INSERT INTO autorise_boire (id_personnage,id_potion) 
+VALUES ((SELECT id_personnage FROM personnage WHERE nom_personnage = "Bonemine"),(SELECT id_personnage FROM personnage WHERE LOWER(nom_personnage) = "magique")
 
+C:
+DELETE FROM casque
+WHERE id_type_casque = 2 AND id_casque NOT IN (SELECT id_casque FROM prendre_casque)
 
+D: 
+UPDATE personnage
+SET adresse_personnage = 'en prison à Condate'
+WHERE id_personnage = 23
+
+E:
+DELETE FROM composer
+WHERE id_potion =9 and id_ingredient=19
+
+F:
+UPDATE prendre_casque
+SET id_casque = 10,qte=42
+WHERE id_personnage = 5 and id_bataille = 9 and id_casque =14 	
 
 
